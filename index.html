@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,21 +18,59 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Trời Ơi — bầu trời biết nói: xem thời tiết và để app trả lời hôm nay nên làm gì, mặc gì.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="weather_app">
+  <meta name="apple-mobile-web-app-title" content="Trời Ơi">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <!-- Favicon: SVG data-URI emoji (file TEXT nên đẩy được qua connector;
+       favicon.png / icons/*.png là nhị phân, không đẩy được — D14). -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>"/>
 
-  <title>weather_app</title>
+  <title>Trời Ơi — Bầu trời biết nói</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Màn hình chờ tải mang thương hiệu Trời Ơi (D14): nền trời sáng +
+       tên app, thuần HTML/CSS của shell — app Dart tự gỡ splash này
+       khi khung hình đầu tiên hiện (sự kiện flutter-first-frame). -->
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      background: linear-gradient(180deg, #BFE0F5 0%, #F4FAFF 100%);
+      font-family: -apple-system, 'Segoe UI', Inter, Roboto, sans-serif;
+    }
+    #splash {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+      color: #1C1E21; text-align: center;
+    }
+    #splash .logo { font-size: 34px; font-weight: 800; letter-spacing: -0.6px; }
+    #splash .tag { font-size: 14px; color: #52606D; }
+    #splash .spin {
+      margin-top: 18px; width: 26px; height: 26px; border-radius: 50%;
+      border: 3px solid rgba(28, 30, 33, 0.15); border-top-color: #2563EB;
+      animation: splash-spin 0.9s linear infinite;
+    }
+    @keyframes splash-spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+  <div id="splash" aria-label="Trời Ơi đang tải">
+    <div class="logo">🌤️ Trời Ơi</div>
+    <div class="tag">Bầu trời biết nói — đang tải thời tiết…</div>
+    <div class="spin"></div>
+  </div>
+  <script>
+    // Gỡ splash ngay khi Flutter vẽ khung hình đầu tiên.
+    window.addEventListener('flutter-first-frame', function () {
+      var s = document.getElementById('splash');
+      if (s) s.remove();
+    });
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader

@@ -1,11 +1,11 @@
 {
-    "name": "weather_app",
-    "short_name": "weather_app",
+    "name": "Trời Ơi",
+    "short_name": "Trời Ơi",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F4FAFF",
+    "theme_color": "#BFE0F5",
+    "description": "Trời Ơi — bầu trời biết nói: xem thời tiết và để app trả lời hôm nay nên làm gì, mặc gì.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
