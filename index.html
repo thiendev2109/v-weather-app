@@ -1,46 +1,438 @@
 <!DOCTYPE html>
-<html>
+<!-- Trời Ơi preview HTML — bản soi chiếu vẫn được duy trì cùng app Flutter;
+     nội dung Premium đã đồng bộ theo app (báo mưa theo mốc 15 phút,
+     xem trước bản tin sáng, các thông báo thật đang ở trạng thái sắp có). -->
+<html lang="vi">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trời Ơi — Weather v2 Preview</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,'Segoe UI',Inter,Roboto,sans-serif}
+  body{background:#E7EAEE;display:flex;flex-direction:column;align-items:center;padding:28px 12px 40px;color:#1C1E21}
+  h1.page{font-size:18px;letter-spacing:-.3px;margin-bottom:4px}
+  p.sub{font-size:13px;color:#68707A;margin-bottom:20px;text-align:center;line-height:1.55}
+  .phone{width:375px;max-width:94vw;height:780px;max-height:86vh;border-radius:36px;border:1px solid rgba(0,0,0,.18);box-shadow:0 22px 55px rgba(10,20,40,.28);overflow:hidden;position:relative;transition:background 1s}
+  canvas#sky{position:absolute;inset:0;width:100%;height:100%}
+  .ui{position:relative;z-index:2;height:100%;display:flex;flex-direction:column}
+  .statusbar{display:flex;justify-content:space-between;padding:12px 22px 2px;font-size:12px;font-weight:600}
+  .appbar{display:flex;justify-content:space-between;align-items:center;padding:8px 20px 4px}
+  .logo{font-size:19px;font-weight:800;letter-spacing:-.4px}
+  .iconbtn{background:none;border:none;font-size:18px;cursor:pointer;color:inherit}
+  .screen{flex:1;overflow-y:auto;padding:4px 20px 30px;scrollbar-width:none}
+  .screen::-webkit-scrollbar{display:none}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:6px 0 4px;scrollbar-width:none}
+  .chip{border:1px solid;border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;background:transparent;color:inherit}
+  .searchrow{display:flex;gap:8px;margin-top:10px}
+  .search{flex:1;padding:10px 13px;border:1px solid;border-radius:13px;font-size:14px;outline:none;background:transparent;color:inherit;min-width:0}
+  .search::placeholder{color:inherit;opacity:.55}
+  .gobtn{border:none;border-radius:13px;padding:0 15px;font-weight:700;cursor:pointer;background:#fff;color:#14202F}
+  .loc{margin-top:18px;font-size:16px;font-weight:600}
+  .bigtemp{font-size:96px;font-weight:100;letter-spacing:-4px;line-height:1.02}
+  .cond{font-size:17px;font-weight:600;margin-top:2px}
+  .hilow{opacity:.72;font-size:13.5px;margin-top:4px}
+  .glass{border:1px solid;border-radius:20px;padding:17px;margin-top:18px;display:flex;gap:14px;align-items:flex-start;backdrop-filter:blur(3px)}
+  .kicker{font-size:11px;font-weight:700;letter-spacing:1.3px;opacity:.65}
+  .verdict{font-size:16.5px;line-height:1.42;font-weight:600;margin-top:7px}
+  .ringwrap{position:relative;width:64px;height:64px;flex-shrink:0}
+  .ringwrap svg{transform:rotate(-90deg)}
+  .ringval{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800}
+  .ringcap{text-align:right;font-size:11.5px;opacity:.65;margin-top:6px}
+  h3.sec{font-size:16px;margin:24px 0 12px}
+  .act{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+  .act .ic{font-size:19px;width:24px;text-align:center}
+  .act .meta{width:126px}.act .nm{font-weight:600;font-size:13.5px}.act .nt{font-size:11px;opacity:.66;line-height:1.3}
+  .bar{flex:1;height:7px;border-radius:6px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:6px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+  .act .sc{font-weight:800;width:26px;text-align:right}
+  .outfit{display:flex;flex-wrap:wrap;gap:8px}
+  .otag{border:1px solid;border-radius:999px;padding:7px 12px;font-size:12.5px}
+  .curvebox{margin-top:4px}
+  .curvehead{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
+  .curvehead b{font-size:15px}
+  #curve{width:100%;height:110px;touch-action:none;cursor:crosshair}
+  .curvfoot{display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:2px}
+  .ministats{display:flex;justify-content:space-between;margin-top:22px}
+  .ms .l{font-size:11px;opacity:.65}.ms .v{font-size:13.5px;font-weight:700;margin-top:3px}
+  .day{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid;font-size:14px}
+  .day .dow{width:82px;font-weight:600}.day .ic{font-size:18px;width:30px}.day .lbl{flex:1;opacity:.7;font-size:13px}
+  .day .rain{font-size:12px;margin-right:8px}.day .min{opacity:.6}.day .max{font-weight:700;margin-left:6px}
+  .foot{font-size:11.5px;opacity:.6;margin-top:14px;line-height:1.5}
+  .loading{text-align:center;padding:56px 8px;opacity:.75;line-height:1.6}
+  .premcard{border:1px solid;border-radius:20px;padding:17px;margin-bottom:14px}
+  .premtitle{font-size:11px;font-weight:700;letter-spacing:1.2px;opacity:.65}
+  .lockrow{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+  .lockrow .t{font-weight:700}.lockrow .d{font-size:12.5px;opacity:.66}
+  .unlockbtn{width:100%;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;background:#8FD0A8;color:#0D2B1A}
+  .rainbars{display:flex;align-items:flex-end;gap:3px;height:44px;margin-top:12px}
+  .rainbars i{flex:1;border-radius:3px;display:block}
+  .goldrow{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .goldrow .sc{font-size:17px;font-weight:800}
+  .briefbox{border-radius:14px;padding:14px;margin-top:10px}
+  .switchrow{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;margin-top:10px}
+  .paywall{position:absolute;inset:0;background:#0D1830;color:#fff;z-index:10;display:none;flex-direction:column}
+  .paywall.open{display:flex}
+  .paywall .scr{flex:1;overflow-y:auto;padding:18px 22px 30px;scrollbar-width:none}
+  .plan{border:1px solid rgba(255,255,255,.25);border-radius:16px;padding:15px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.07)}
+  .plan.sel{background:#fff;color:#1C1E21;border:2px solid #8FD0A8}
+  .plan .pr{font-weight:800;font-size:16px;margin-left:auto}
+  .planbadge{background:#8FD0A8;color:#0D2B1A;font-size:10.5px;font-weight:800;border-radius:8px;padding:3px 8px}
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="/">
-
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="weather_app">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>weather_app</title>
-  <link rel="manifest" href="manifest.json">
+  @media (max-width: 560px){
+    body{padding:0}
+    h1.page, p.sub{display:none}
+    .phone{width:100%;max-width:100%;height:100dvh;max-height:none;border-radius:0;border:none;box-shadow:none}
+  }
+</style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+<h1 class="page">Trời Ơi — bản v3 Premium</h1>
+<p class="sub">Concept <b>“Bầu trời biết nói”</b>: nền trời tự vẽ theo thời tiết thật (đêm nay Đà Nẵng trời quang → trời sao),<br>app trả lời <i>hôm nay nên làm gì, mặc gì</i> thay vì chỉ liệt kê số. Số liệu thật từ Open-Meteo.</p>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
+<div class="phone" id="phone">
+  <canvas id="sky"></canvas>
+  <div class="ui" id="ui">
+    <div class="statusbar"><span>9:41</span><span>5G&nbsp;&nbsp;▰▰▰</span></div>
+    <div class="appbar"><div class="logo">Trời Ơi</div><button class="iconbtn" onclick="load(cur)">↻</button></div>
+    <div class="screen">
+      <div class="chips" id="chips"></div>
+      <div class="searchrow"><input class="search" id="q" placeholder="Tìm thành phố… (vd: Quy Nhơn)"><button class="gobtn" onclick="searchCity()">Tìm</button></div>
+      <div id="body"><div class="loading">Đang tải bầu trời thật…</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="paywall" id="paywall">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px 0">
+    <b style="font-size:17px">Trời Ơi Premium</b>
+    <button onclick="closePaywall()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer">✕</button>
+  </div>
+  <div class="scr">
+    <div style="text-align:center;font-size:38px;margin-top:6px">👑</div>
+    <div style="text-align:center;font-size:25px;font-weight:800;letter-spacing:-.5px;line-height:1.15;margin:8px 0 20px">Đừng để trời phá<br>kế hoạch của bạn</div>
+    <div style="margin-bottom:18px;line-height:1.45">
+      <p style="margin-bottom:11px">🌧️ <b>Báo mưa theo 15 phút</b><br><span style="color:#B9C4D4;font-size:13px">“Mưa bắt đầu sau ~15 phút ở thành phố đang xem” — báo trước khi bạn ra khỏi nhà.</span></p>
+      <p style="margin-bottom:11px">🏆 <b>Cửa sổ vàng</b><br><span style="color:#B9C4D4;font-size:13px">Tự tìm khoảng trời đẹp nhất tuần cho chạy bộ, đi biển, hẹn hò.</span></p>
+      <p>🌅 <b>Xem trước bản tin sáng</b><br><span style="color:#B9C4D4;font-size:13px">Xem trước nội dung bản tin: mặc gì, có mưa không, hôm nay nên làm gì. Thông báo thật sắp có.</span></p>
+    </div>
+    <div class="plan sel" data-plan="year" onclick="selectPlan('year')"><span>●</span><span><b>Theo năm</b><br><small style="opacity:.65">≈ 25.000đ/tháng</small></span><span class="planbadge">TIẾT KIỆM 49%</span><span class="pr">299.000đ</span></div>
+    <div class="plan" data-plan="month" onclick="selectPlan('month')"><span>○</span><span><b>Theo tháng</b><br><small style="opacity:.65">huỷ bất cứ lúc nào</small></span><span class="pr">49.000đ</span></div>
+    <div class="plan" data-plan="event" onclick="selectPlan('event')"><span>○</span><span><b>Gói sự kiện</b><br><small style="opacity:.65">theo dõi 1 sự kiện / đám cưới</small></span><span class="pr">199.000đ</span></div>
+    <button class="unlockbtn" style="margin-top:8px" onclick="unlockPremium()">Dùng thử 7 ngày miễn phí</button>
+    <p style="text-align:center;color:#8A97A8;font-size:11.5px;line-height:1.45;margin-top:10px">Sau 7 ngày: tự gia hạn theo gói đã chọn · Huỷ bất cứ lúc nào<br>Demo: bấm dùng thử là mở khoá ngay, chưa thu tiền thật.</p>
+  </div>
+</div>
+
+<script>
+const CITIES=[
+ {name:'Đà Nẵng',lat:16.0544,lon:108.2022},{name:'Hà Nội',lat:21.0245,lon:105.8412},
+ {name:'TP. Hồ Chí Minh',lat:10.8231,lon:106.6297},{name:'Đà Lạt',lat:11.9404,lon:108.4583},
+ {name:'Huế',lat:16.4637,lon:107.5909},{name:'Cần Thơ',lat:10.0452,lon:105.7469}];
+let cur=CITIES[0];
+const WMO={0:['Trời quang','☀️'],1:['Ít mây','🌤️'],2:['Mây rải rác','⛅'],3:['Nhiều mây','☁️'],45:['Sương mù','🌫️'],48:['Sương mù','🌫️'],51:['Mưa phùn','🌦️'],53:['Mưa phùn','🌦️'],55:['Mưa phùn','🌦️'],56:['Mưa phùn','🌦️'],57:['Mưa phùn','🌦️'],61:['Mưa','🌧️'],63:['Mưa','🌧️'],65:['Mưa to','🌧️'],66:['Mưa','🌧️'],67:['Mưa','🌧️'],71:['Tuyết','❄️'],73:['Tuyết','❄️'],75:['Tuyết','❄️'],77:['Tuyết','❄️'],80:['Mưa rào','🌦️'],81:['Mưa rào','🌦️'],82:['Mưa rào lớn','⛈️'],85:['Tuyết','❄️'],86:['Tuyết','❄️'],95:['Giông bão','⛈️'],96:['Giông bão','⛈️'],99:['Giông bão','⛈️']};
+const w=c=>WMO[c]||['Không rõ','❔'];
+const DOW=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+const $=id=>document.getElementById(id);
+const clampS=v=>Math.max(5,Math.min(99,Math.round(v)));
+
+/* ---------- BẦU TRỜI SỐNG (canvas) ---------- */
+let scene={mode:'nightClear',dark:true};
+const cv=$('sky'), ctx=cv.getContext('2d');
+let stars=[]; for(let i=0;i<80;i++) stars.push({x:Math.random(),y:Math.random()*0.55,r:Math.random()<0.12?1.8:1.1,p:Math.random()*6.28});
+let drops=[]; for(let i=0;i<80;i++) drops.push({x:Math.random(),y:Math.random(),s:0.5+Math.random()*0.7});
+function sizeCanvas(){ const r=$('phone').getBoundingClientRect(); cv.width=r.width*2; cv.height=r.height*2; }
+function palettes(){
+  const m=scene.mode;
+  if(m==='dayClear') return ['#BFE0F5','#F4FAFF'];
+  if(m==='dayCloudy') return ['#CBD6DE','#F2F5F7'];
+  if(m==='rainDay') return ['#9FB2C3','#E8EEF2'];
+  if(m==='rainNight') return ['#131E2C','#2A3A4D'];
+  return ['#0D1830','#33507A']; // night
+}
+function drawSky(t){
+  const W=cv.width,H=cv.height; if(!W) return;
+  const [top,bot]=palettes();
+  const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,top); g.addColorStop(1,bot);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  const night=scene.dark;
+  // orb: trăng / mặt trời
+  const ox=W*0.82, oy=H*0.115;
+  const og=ctx.createRadialGradient(ox,oy,0,ox,oy,220);
+  og.addColorStop(0, night?'rgba(232,238,247,.8)':'rgba(255,233,168,.9)'); og.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=og; ctx.beginPath(); ctx.arc(ox,oy,220,0,7); ctx.fill();
+  ctx.fillStyle= night?'#F2F5FA':'#FFD968'; ctx.beginPath(); ctx.arc(ox,oy,night?34:52,0,7); ctx.fill();
+  // sao
+  if(scene.mode==='nightClear'){
+    for(const s of stars){ const tw=0.35+0.65*(0.5+0.5*Math.sin(t/900+s.p)); ctx.fillStyle=`rgba(255,255,255,${0.85*tw})`; ctx.beginPath(); ctx.arc(s.x*W,s.y*H,s.r,0,7); ctx.fill(); }
+  }
+  // mây trôi
+  ctx.fillStyle=`rgba(255,255,255,${scene.mode==='dayClear'?0.5:0.30})`;
+  for(let i=0;i<4;i++){
+    const sp=0.008+i*0.004, x=(((i*0.31 + t/1000*sp)%1.3)-0.15)*W, y=H*(0.05+i*0.07), r=(26+i*9)*2;
+    ctx.beginPath(); ctx.ellipse(x,y,r*1.3,r*0.5,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x+r*0.65,y+8,r*0.95,r*0.4,0,0,7); ctx.fill();
+  }
+  // mưa
+  if(scene.mode==='rainDay'||scene.mode==='rainNight'||scene.mode==='storm'){
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=2.4; ctx.lineCap='round';
+    for(const d of drops){ const y=((d.y + t/1600*d.s)%1)*H, x=d.x*W; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-8,y+26); ctx.stroke(); }
+  }
+  requestAnimationFrame(drawSky);
+}
+function applyTheme(){
+  const dark=scene.dark;
+  $('phone').style.color= dark?'#FFFFFF':'#1C1E21';
+  document.querySelectorAll('.chip,.search,.day').forEach(el=>{ el.style.borderColor= dark?'rgba(255,255,255,.28)':'rgba(20,32,47,.18)'; });
+  document.querySelectorAll('.chip.sel').forEach(el=>{ el.style.background= dark?'#FFFFFF':'#1C1E21'; el.style.color= dark?'#14202F':'#FFFFFF'; });
+  const glass=$('glass'); if(glass){ glass.style.background= dark?'rgba(255,255,255,.10)':'rgba(255,255,255,.65)'; glass.style.borderColor= dark?'rgba(255,255,255,.18)':'rgba(20,32,47,.10)'; }
+}
+
+/* ---------- INSIGHTS (cùng công thức bản Dart) ---------- */
+function comfort(w){ return clampS(100 - Math.abs(w.feels-23)*2.2 - Math.max(0,w.hum-65)*0.5 - w.rainToday*0.35 - Math.max(0,w.wind-18)*0.8); }
+function verdict(w,hours,days){
+  const parts=[];
+  if(hours.length>=7){ const d=hours[6].t-hours[0].t; if(d<=-2) parts.push(`mát dần ${Math.abs(Math.round(d))}° trong vài giờ tới`); else if(d>=2) parts.push(`nóng lên ${Math.round(d)}° trong vài giờ tới`); }
+  let rainNote=null;
+  const ri=hours.findIndex(h=>h.r>=50);
+  if(ri>=0) rainNote=`khả năng mưa cao khoảng ${hours[ri].h}h`;
+  else { const rd=days.findIndex(d=>d.rain>=60); if(rd>0) rainNote=`từ ${DOW[days[rd].dow].toLowerCase()} mưa nhiều hơn — tranh thủ lúc trời đang đẹp`; }
+  let s=`${w.label.toLowerCase()}, ${Math.round(w.temp)}°`;
+  if(!parts.length&&!rainNote) return s+' — thời tiết ổn định, cứ theo kế hoạch của bạn.';
+  if(parts.length) s+=', '+parts.join(', ');
+  if(rainNote) s+=`. Lưu ý: ${rainNote}`;
+  return s+'.';
+}
+function activities(w,isDay){
+  const rain=w.rainToday, cf=comfort(w);
+  const note=(s,g,m,b)=> s>=70?g:(s>=45?m:b);
+  const run=clampS(100-Math.abs(w.feels-22)*3-rain*0.5-Math.max(0,w.wind-20));
+  const beach=isDay? clampS(95-rain*0.8-Math.max(0,30-w.feels)*1.5) : clampS(30-rain*0.2);
+  const cafe=clampS(cf-rain*0.4);
+  const home=clampS(40+rain*0.45+(100-cf)*0.25);
+  return [
+    {ic:'🏃',nm:'Chạy bộ',sc:run,nt:note(run,'Trời mát, không mưa — ra sân thôi','Hơi nóng, chạy sau 17h sẽ dễ chịu hơn','Không nên — mưa hoặc quá nóng')},
+    {ic:'🏖️',nm:'Đi biển',sc:beach,nt:isDay?note(beach,'Nắng đẹp, ít khả năng mưa','Ổn, nhưng để ý mây mưa','Không đẹp — khả năng mưa cao'):'Trời đã tối — để dành sáng mai'},
+    {ic:'☕',nm:'Cà phê ngoài trời',sc:cafe,nt:note(cafe,'Ngồi ngoài trời là chuẩn bài','Ngồi được, chọn chỗ có mái che','Chọn quán trong nhà hôm nay nhé')},
+    {ic:'🎬',nm:'Ở nhà xem phim',sc:home,nt:note(home,'Trời này ở nhà là thượng sách','Cũng hợp nếu bạn lười ra ngoài','Đừng phí trời đẹp ở nhà')},
+  ];
+}
+function outfit(w){
+  const f=w.feels, tips=[];
+  if(f>=30) tips.push('👕 Áo thun mỏng, quần ngắn','🧢 Mũ + kem chống nắng');
+  else if(f>=25) tips.push('👕 Áo thun là đủ','🧥 Tối về muộn: thêm áo khoác mỏng');
+  else if(f>=20) tips.push('🧥 Áo khoác mỏng / hoodie','👖 Quần dài thoải mái');
+  else tips.push('🧣 Áo ấm nhiều lớp','🏍️ Mang khăn nếu đi xe máy');
+  if(w.rainToday>=40) tips.push('🌂 Nhớ mang áo mưa / ô');
+  if(w.wind>=20) tips.push('💨 Gió mạnh — tránh áo quá rộng');
+  return tips;
+}
+
+/* ---------- DATA ---------- */
+function chips(){
+  $('chips').innerHTML=CITIES.map((c,i)=>`<button class="chip ${c.name===cur.name?'sel':''}" onclick="pick(${i})">${c.name}</button>`).join('');
+  applyTheme();
+}
+function pick(i){ cur=CITIES[i]; chips(); load(cur); }
+/* ---------- PREMIUM v3 ---------- */
+let premiumUnlocked=false, selPlan='year';
+$('phone').appendChild($('paywall')); // đưa paywall vào trong khung điện thoại
+function openPaywall(){ $('paywall').classList.add('open'); }
+function closePaywall(){ $('paywall').classList.remove('open'); }
+function selectPlan(p){ selPlan=p; document.querySelectorAll('.plan').forEach(el=>{ const on=el.dataset.plan===p; el.classList.toggle('sel',on); el.querySelector('span').textContent= on?'●':'○'; }); }
+function unlockPremium(){ premiumUnlocked=true; closePaywall(); document.querySelector('.logo').textContent='Trời Ơi 👑'; renderPremium(); const el=$('premium'); if(el) el.scrollIntoView({behavior:'smooth'}); }
+
+function rainAlertJS(j){
+  const m=j.minutely_15; if(!m||!m.time) return {head:'Chưa có dữ liệu mưa theo 15 phút ở khu vực này',detail:'',slots:[],max:0.4};
+  const now=new Date(); let s=m.time.findIndex(t=>new Date(t)>=now); if(s<0) s=0;
+  const pts=[]; for(let i=s;i<Math.min(s+48,m.time.length);i++) pts.push({t:new Date(m.time[i]),mm:m.precipitation[i]||0});
+  const slots=pts.slice(0,12); const max=Math.max(0.4,...slots.map(x=>x.mm));
+  const ri=pts.findIndex(x=>x.mm>0.05);
+  if(ri<0) return {head:'12 giờ tới: không mưa ở thành phố đang xem ✓',detail:'Cứ yên tâm ra đường — nhớ xem lại trước khi đi xa.',slots,max};
+  let end=ri; while(end<pts.length&&pts[end].mm>0.05) end++;
+  const dur=(end-ri)*15; const total=pts.slice(ri,end).reduce((a,x)=>a+x.mm,0);
+  const inMin=ri*15; const hh=String(pts[ri].t.getHours()).padStart(2,'0')+':'+String(pts[ri].t.getMinutes()).padStart(2,'0');
+  const when= inMin<=0?'đang mưa':(inMin<60?`sau ~${inMin} phút`:`lúc ${hh}`);
+  return {head:`Mưa bắt đầu ${when}`,detail:`Kéo dài khoảng ${dur} phút · lượng mưa ~${total.toFixed(1)}mm. ${inMin>30?'Kịp làm thêm vài việc trước khi mưa.':'Chuẩn bị áo mưa ngay nhé.'}`,slots,max};
+}
+function hourScoreJS(h){ let s=100-Math.abs(h.t-24)*3-h.r*0.7; if(h.code>=51)s-=25; if(h.code===3)s-=6; return s; }
+function goldenJS(j){
+  const H=j.hourly; const now=new Date();
+  let s=H.time.findIndex(t=>new Date(t)>now); if(s<0)s=0;
+  const up=[]; for(let i=s;i<Math.min(s+72,H.time.length);i++) up.push({dt:new Date(H.time[i]),t:H.temperature_2m[i],code:H.weather_code[i],r:H.precipitation_probability[i]??0});
+  const specs=[['🏃','Chạy bộ',h=>(h>=5&&h<=9)||(h>=16&&h<=20)],['🏖️','Đi biển',h=>h>=9&&h<=16],['☕','Cà phê ngoài trời',h=>h>=16&&h<=22]];
+  return specs.map(([ic,nm,f])=>{
+    let best=-1,bw=null;
+    for(let i=0;i+2<up.length;i++){ const win=up.slice(i,i+3); if(!win.every(x=>f(x.dt.getHours()))) continue; if(win[0].dt.getDate()!==win[2].dt.getDate()) continue; const avg=win.reduce((a,x)=>a+hourScoreJS(x),0)/3; if(avg>best){best=avg;bw=win;} }
+    if(!bw) return null;
+    const d0=bw[0].dt; const today=new Date(); const tom=new Date(Date.now()+864e5);
+    const dl= d0.getDate()===today.getDate()?'Hôm nay':(d0.getDate()===tom.getDate()?'Ngày mai':DOW[d0.getDay()]);
+    return {ic,nm,dl,range:`${d0.getHours()}h–${bw[2].dt.getHours()+1}h`,sc:clampS(best)};
+  }).filter(Boolean);
+}
+function briefJS(L){
+  const {W,days}=L; const acts=activities(W,L.isDay); const best=acts.reduce((a,b)=>a.sc>=b.sc?a:b); const tips=outfit(W); const ra=rainAlertJS(L.j);
+  return [
+    `${W.label}, ${Math.round(days[0].min)}–${Math.round(days[0].max)}°. Cảm giác như ${Math.round(W.feels)}°.`,
+    ra.head.startsWith('Mưa')?`☂️ ${ra.head.charAt(0).toLowerCase()+ra.head.slice(1)} — ${ra.detail.split('.')[0]}.`:`☀️ Hôm nay khả năng mưa ${days[0].rain}% — khá yên tâm.`,
+    `👕 Mặc: ${tips[0].replace(/^[^\s]+\s/,'').toLowerCase()}${tips[1]?'; '+tips[1].replace(/^[^\s]+\s/,'').toLowerCase():''}.`,
+    `⭐ Việc hợp nhất hôm nay: ${best.nm.toLowerCase()} (${best.sc}/100).`,
+    `🌤️ Chỉ số dễ chịu: ${comfort(W)}/100.`
+  ];
+}
+function renderPremium(){
+  const box=$('premium'); if(!box||!window._last) return;
+  const L=window._last, dark=scene.dark, accent=L.accent;
+  const cardBg= dark?'rgba(255,255,255,.10)':'rgba(255,255,255,.65)';
+  const line= dark?'rgba(255,255,255,.20)':'rgba(20,32,47,.12)';
+  const head=`<div style="display:flex;align-items:center;gap:8px;margin:26px 0 12px"><h3 style="font-size:16px">👑 Trời Ơi Premium</h3>${premiumUnlocked?'<span style="background:#8FD0A8;color:#0D2B1A;font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px">ĐÃ MỞ KHOÁ</span>':''}</div>`;
+  if(!premiumUnlocked){
+    box.innerHTML=head+`<div class="premcard" style="background:${cardBg};border-color:${line}">
+      ${[['🌧️','Báo mưa theo 15 phút','Mưa theo mốc 15 phút cho thành phố đang xem'],['🏆','Cửa sổ vàng tuần này','Khoảng trời đẹp nhất cho từng kế hoạch'],['🌅','Xem trước bản tin sáng','Xem trước: mặc gì, có mưa không — thông báo thật sắp có']].map(f=>`<div class="lockrow"><div style="font-size:18px">${f[0]}</div><div style="flex:1"><div class="t">${f[1]}</div><div class="d">${f[2]}</div></div><div style="opacity:.6">🔒</div></div>`).join('')}
+      <button class="unlockbtn" onclick="openPaywall()">Mở Premium — từ 25k/tháng</button></div>`;
+    return;
+  }
+  const ra=rainAlertJS(L.j), gold=goldenJS(L.j), brief=briefJS(L);
+  const bars=ra.slots.map(x=>`<i style="height:${6+(x.mm/ra.max)*36}px;background:${x.mm>0.05?(dark?'#9CC3FF':'#2563EB'):line}"></i>`).join('');
+  box.innerHTML=head+
+  `<div class="premcard" style="background:${cardBg};border-color:${line}">
+     <div class="premtitle">🌧️ BÁO MƯA THEO 15 PHÚT</div>
+     <div style="font-size:16.5px;font-weight:700;margin-top:7px">${ra.head}</div>
+     <div style="font-size:13px;opacity:.72;line-height:1.4;margin-top:3px">${ra.detail}</div>
+     <div class="rainbars">${bars}</div>
+     <div style="display:flex;justify-content:space-between;font-size:11px;opacity:.6;margin-top:5px"><span>Bây giờ</span><span>Mưa 3 giờ tới, từng 15 phút</span><span>+3h</span></div>
+     <div class="switchrow"><span>Báo mưa 30 phút — sắp có</span><span>🔔 <b>Tắt (sắp có)</b></span></div>
+   </div>
+   <div class="premcard" style="background:${cardBg};border-color:${line}">
+     <div class="premtitle">🏆 CỬA SỔ VÀNG — TRỜI ĐẸP NHẤT CHO KẾ HOẠCH</div>
+     <div style="margin-top:10px">${gold.map(g=>`<div class="goldrow"><div style="font-size:19px;width:26px;text-align:center">${g.ic}</div><div style="flex:1"><div style="font-weight:600">${g.nm}</div><div style="font-size:12px;opacity:.66">${g.dl} · ${g.range}</div></div><div class="sc" style="color:${accent}">${g.sc}</div></div>`).join('')}</div>
+   </div>
+   <div class="premcard" style="background:${cardBg};border-color:${line}">
+     <div class="premtitle">🌅 XEM TRƯỚC BẢN TIN SÁNG</div>
+     <div class="briefbox" style="background:${dark?'rgba(255,255,255,.14)':'#F2F5F7'}">
+       <div style="display:flex;justify-content:space-between;font-size:13px"><b>🌤️ Trời Ơi</b><span style="opacity:.6;font-size:11.5px">06:30</span></div>
+       <div style="font-weight:700;margin-top:6px">Chào buổi sáng — ${L.city.name} hôm nay</div>
+       ${brief.map(l=>`<div style="font-size:13px;line-height:1.4;margin-top:3px">${l}</div>`).join('')}
+     </div>
+     <div class="switchrow"><span>Xem trước bản tin sáng — thông báo thật sắp có, chưa gửi tự động</span><span>🔔 <b>Tắt (sắp có)</b></span></div>
+   </div>`;
+}
+
+async function searchCity(){
+  const q=$('q').value.trim(); if(q.length<2) return;
+  $('body').innerHTML='<div class="loading">Đang tìm…</div>';
+  try{
+    const j=await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=vi`)).json();
+    if(!j.results||!j.results.length){ $('body').innerHTML='<div class="loading">Không tìm thấy thành phố.</div>'; return; }
+    const g=j.results[0]; cur={name:g.name,lat:g.latitude,lon:g.longitude}; chips(); load(cur);
+  }catch(e){ $('body').innerHTML='<div class="loading">Lỗi mạng, thử lại nhé.</div>'; }
+}
+async function load(city){
+  $('body').innerHTML='<div class="loading">Đang tải bầu trời thật…</div>';
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,precipitation_probability&minutely_15=precipitation&forecast_minutely_15=48&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&timezone=auto&forecast_days=7`;
+    const j=await (await fetch(url)).json();
+    render(city,j);
+  }catch(e){
+    $('body').innerHTML='<div class="loading">Không tải được dữ liệu trực tiếp (mở file offline?).<br><br>Snapshot thật 19:45 — Đà Nẵng: <b>27°C, trời quang, độ ẩm 84%</b>.<br>Mở bằng link / có mạng là trời sống chạy ngay.</div>';
+  }
+}
+let curveHours=[], curveSel=0;
+function render(city,j){
+  const c=j.current, d=j.daily, h=j.hourly;
+  const [label,icon]=w(c.weather_code);
+  const localHour=parseInt(c.time? j.current.time.slice(11,13) : new Date().getHours());
+  const sr=d.sunrise[0].slice(11,16), ss=d.sunset[0].slice(11,16);
+  const isDay = j.current.time ? (j.current.time.slice(11,16)>=sr && j.current.time.slice(11,16)<ss) : true;
+  // cảnh trời
+  let mode;
+  if(c.weather_code===95||c.weather_code===96||c.weather_code===99) mode='storm';
+  else if(c.weather_code>=51) mode=isDay?'rainDay':'rainNight';
+  else if(isDay) mode=c.weather_code>=2?'dayCloudy':'dayClear';
+  else mode=c.weather_code>=2?'nightCloudy':'nightClear';
+  scene={mode,dark: !isDay || mode==='rainNight' || mode==='storm'&&!isDay};
+  if(mode==='storm') scene.dark=!isDay;
+
+  const now=new Date(); let start=h.time.findIndex(t=>{const dt=new Date(t);return dt.getHours()===now.getHours()&&dt.getDate()===now.getDate();});
+  if(start<0) start=0;
+  const hours=[]; for(let i=start;i<Math.min(start+24,h.time.length);i++){ const dt=new Date(h.time[i]); hours.push({h:dt.getHours(),t:h.temperature_2m[i],r:h.precipitation_probability[i]??0}); }
+  curveHours=hours; curveSel=0;
+  const days=d.time.map((t,i)=>({dow:new Date(t+'T00:00').getDay(),code:d.weather_code[i],max:d.temperature_2m_max[i],min:d.temperature_2m_min[i],rain:d.precipitation_probability_max[i]??0}));
+  const W={temp:c.temperature_2m,feels:c.apparent_temperature,hum:c.relative_humidity_2m,wind:c.wind_speed_10m,label,rainToday:days[0].rain};
+  const cf=comfort(W), acts=activities(W,isDay), tips=outfit(W);
+  const accent = scene.dark ? '#8FD0A8' : '#2563EB';
+  const ringC=2*Math.PI*26;
+
+  $('body').innerHTML=`
+    <div class="loc">📍 ${city.name}</div>
+    <div style="display:flex;align-items:flex-start;gap:10px"><div class="bigtemp">${Math.round(W.temp)}°</div><div style="font-size:36px;margin-top:20px">${icon}</div></div>
+    <div class="cond">${label}</div>
+    <div class="hilow">Cao nhất ${Math.round(days[0].max)}° · Thấp nhất ${Math.round(days[0].min)}° · Cảm giác như ${Math.round(W.feels)}°</div>
+    <div class="glass" id="glass">
+      <div style="flex:1"><div class="kicker">TRỜI NÓI</div><div class="verdict">${verdict(W,hours,days)}</div></div>
+      <div><div class="ringwrap">
+        <svg width="64" height="64"><circle cx="32" cy="32" r="26" fill="none" stroke="${scene.dark?'rgba(255,255,255,.18)':'rgba(20,32,47,.10)'}" stroke-width="6"/><circle id="ringfg" cx="32" cy="32" r="26" fill="none" stroke="${accent}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${ringC}" stroke-dashoffset="${ringC}"/></svg>
+        <div class="ringval">${cf}</div></div>
+        <div class="ringcap">Chỉ số dễ chịu</div></div>
+    </div>
+    <h3 class="sec">Hôm nay làm gì?</h3>
+    ${acts.map(a=>`<div class="act"><div class="ic">${a.ic}</div><div class="meta"><div class="nm">${a.nm}</div><div class="nt">${a.nt}</div></div><div class="bar" style="background:${scene.dark?'rgba(255,255,255,.16)':'rgba(20,32,47,.10)'}"><i data-w="${a.sc}" style="width:0;background:${accent}"></i></div><div class="sc">${a.sc}</div></div>`).join('')}
+    <div class="outfit" style="margin-top:6px">${tips.map(t=>`<span class="otag">${t}</span>`).join('')}</div>
+    <h3 class="sec">Nhiệt độ 24 giờ tới</h3>
+    <div class="curvebox">
+      <div class="curvehead"><span id="cv-h">Bây giờ</span><b id="cv-t" style="color:${accent}">${Math.round(hours[0].t)}°</b><span id="cv-r" style="opacity:.7">Mưa ${hours[0].r}%</span></div>
+      <canvas id="curve" data-accent="${accent}"></canvas>
+      <div class="curvfoot"><span>${hours[0].h}h</span><span>← vuốt để xem từng giờ →</span><span>${hours[hours.length-1].h}h</span></div>
+    </div>
+    <div class="ministats">
+      <div class="ms"><div class="l">Độ ẩm</div><div class="v">${W.hum}%</div></div>
+      <div class="ms"><div class="l">Gió</div><div class="v">${Math.round(W.wind)} km/h</div></div>
+      <div class="ms"><div class="l">Mưa hôm nay</div><div class="v">${W.rainToday}%</div></div>
+      <div class="ms"><div class="l">Mặt trời</div><div class="v">${sr}–${ss}</div></div>
+    </div>
+    <h3 class="sec">7 ngày tới</h3>
+    ${days.map((dd,i)=>{const [lb,ic]=w(dd.code);return `<div class="day"><div class="dow">${i===0?'Hôm nay':DOW[dd.dow]}</div><div class="ic">${ic}</div><div class="lbl">${lb}</div>${dd.rain?`<div class="rain" style="color:${scene.dark?'#9CC3FF':'#2563EB'}">${dd.rain}%</div>`:''}<div class="min">${Math.round(dd.min)}°</div><div class="max">${Math.round(dd.max)}°</div></div>`}).join('')}
+    <div class="foot">Dữ liệu thật: Open-Meteo · Nền trời vẽ trực tiếp theo thời tiết tại nơi đang xem — mở ban ngày sẽ thấy trời sáng, có mưa sẽ thấy mưa rơi.</div><div id="premium"></div>`;
+  window._last={city,j,W,isDay,accent,days,hours};
+  applyTheme();
+  renderPremium();
+  requestAnimationFrame(()=>{ const rf=$('ringfg'); if(rf) rf.style.transition='stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)', rf.style.strokeDashoffset= ringC*(1-cf/100);
+    document.querySelectorAll('.bar i').forEach(el=>el.style.width=el.dataset.w+'%'); });
+  setupCurve();
+}
+/* ---------- BIỂU ĐỒ VUỐT ---------- */
+function setupCurve(){
+  const cvs=$('curve'); if(!cvs) return;
+  const rect=cvs.getBoundingClientRect(); cvs.width=rect.width*2; cvs.height=220;
+  const draw=()=>{
+    const g=cvs.getContext('2d'), Wd=cvs.width, Hd=cvs.height, temps=curveHours.map(x=>x.t);
+    const mn=Math.min(...temps)-1.5, mx=Math.max(...temps)+1.5, dx=Wd/(temps.length-1);
+    const pt=i=>[i*dx, Hd-((temps[i]-mn)/(mx-mn))*Hd];
+    g.clearRect(0,0,Wd,Hd);
+    g.beginPath(); g.moveTo(...pt(0));
+    for(let i=0;i<temps.length-1;i++){ const [x0,y0]=pt(i),[x1,y1]=pt(i+1); g.quadraticCurveTo(x0,y0,(x0+x1)/2,(y0+y1)/2); }
+    g.lineTo(...pt(temps.length-1));
+    const accent=cvs.dataset.accent;
+    const area=new Path2D(); // fill
+    g.save(); g.lineTo(Wd,Hd); g.lineTo(0,Hd); g.closePath();
+    const gr=g.createLinearGradient(0,0,0,Hd); gr.addColorStop(0,accent+'55'); gr.addColorStop(1,accent+'05');
+    g.fillStyle=gr; g.fill(); g.restore();
+    g.beginPath(); g.moveTo(...pt(0));
+    for(let i=0;i<temps.length-1;i++){ const [x0,y0]=pt(i),[x1,y1]=pt(i+1); g.quadraticCurveTo(x0,y0,(x0+x1)/2,(y0+y1)/2); }
+    g.lineTo(...pt(temps.length-1));
+    g.strokeStyle=accent; g.lineWidth=5; g.lineCap='round'; g.stroke();
+    const [sx,sy]=pt(curveSel);
+    g.strokeStyle=accent+'66'; g.lineWidth=2; g.beginPath(); g.moveTo(sx,0); g.lineTo(sx,Hd); g.stroke();
+    g.fillStyle='#fff'; g.beginPath(); g.arc(sx,sy,11,0,7); g.fill();
+    g.fillStyle=accent; g.beginPath(); g.arc(sx,sy,9,0,7); g.fill();
+  };
+  draw();
+  const pick=e=>{ const r=cvs.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left; const idx=Math.round((x/r.width)*(curveHours.length-1)); if(idx!==curveSel&&idx>=0&&idx<curveHours.length){ curveSel=idx; const hh=curveHours[idx]; $('cv-h').textContent= idx===0?'Bây giờ':hh.h+':00'; $('cv-t').textContent=Math.round(hh.t)+'°'; $('cv-r').textContent='Mưa '+hh.r+'%'; draw(); } };
+  cvs.addEventListener('pointerdown',pick); cvs.addEventListener('pointermove',e=>{ if(e.buttons) pick(e); });
+  cvs.addEventListener('touchmove',pick,{passive:true});
+}
+sizeCanvas(); window.addEventListener('resize',sizeCanvas);
+requestAnimationFrame(drawSky);
+chips(); load(cur);
+</script>
 </body>
 </html>
