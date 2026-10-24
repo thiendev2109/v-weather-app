@@ -33,36 +33,58 @@
   <title>Trời Ơi — Bầu trời biết nói</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Màn hình chờ tải mang thương hiệu Trời Ơi (D14): nền trời sáng +
-       tên app, thuần HTML/CSS của shell — app Dart tự gỡ splash này
-       khi khung hình đầu tiên hiện (sự kiện flutter-first-frame). -->
+  <!-- Màn hình chờ tải mang thương hiệu Trời Ơi (D14): tên app,
+       thuần HTML/CSS của shell — app Dart tự gỡ splash này khi
+       khung hình đầu tiên hiện (sự kiện flutter-first-frame).
+       Cụm V (A1): gradient splash chọn NGÀY/ĐÊM theo giờ máy người
+       dùng bằng script nhỏ ngay trong head (chạy trước khi body
+       được vẽ, không lóe nền ngày vào ban đêm); splash co về đúng
+       cột 430px, nền ngoài cột là #E7EAEE khớp nền ngoài cột app
+       ở desktop (main.dart). Cụm V (A3): splash KHÔNG còn spinner
+       riêng — chỉ logo + nền; vòng quay duy nhất của luồng tải là
+       CircularProgressIndicator trong app Dart (trước đây người
+       dùng thấy 2 spinner 2 kiểu nối tiếp nhau). Cụm V (A4): font
+       stack của splash mở đầu bằng Roboto — đúng font mặc định
+       Flutter dùng cho app — để chữ splash và chữ app không lệch
+       hệ (cách ít rủi ro nhất: chỉ sửa shell, không đụng theme). -->
+  <script>
+    // Chọn chế độ ngày/đêm cho splash theo giờ địa phương của máy
+    // người dùng: 06:00–17:59 = ngày, còn lại = đêm (cùng ngưỡng
+    // với initialSceneForHour ở phía Dart).
+    (function () {
+      var h = new Date().getHours();
+      if (h < 6 || h >= 18) document.documentElement.classList.add('night');
+    })();
+  </script>
   <style>
     html, body { margin: 0; padding: 0; height: 100%; }
     body {
-      background: linear-gradient(180deg, #BFE0F5 0%, #F4FAFF 100%);
-      font-family: -apple-system, 'Segoe UI', Inter, Roboto, sans-serif;
+      /* Nền NGOÀI cột splash: khớp nền xám quanh cột app desktop. */
+      background: #E7EAEE;
+      font-family: Roboto, -apple-system, 'Segoe UI', Inter, sans-serif;
     }
     #splash {
-      position: fixed; inset: 0;
+      position: fixed; top: 0; bottom: 0;
+      left: 50%; transform: translateX(-50%);
+      width: min(430px, 100%);
+      background: linear-gradient(180deg, #BFE0F5 0%, #F4FAFF 100%);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 10px;
       color: #1C1E21; text-align: center;
     }
+    html.night #splash {
+      background: linear-gradient(180deg, #0D1830 0%, #33507A 100%);
+      color: #FFFFFF;
+    }
     #splash .logo { font-size: 34px; font-weight: 800; letter-spacing: -0.6px; }
     #splash .tag { font-size: 14px; color: #52606D; }
-    #splash .spin {
-      margin-top: 18px; width: 26px; height: 26px; border-radius: 50%;
-      border: 3px solid rgba(28, 30, 33, 0.15); border-top-color: #2563EB;
-      animation: splash-spin 0.9s linear infinite;
-    }
-    @keyframes splash-spin { to { transform: rotate(360deg); } }
+    html.night #splash .tag { color: #B9C4D4; }
   </style>
 </head>
 <body>
   <div id="splash" aria-label="Trời Ơi đang tải">
     <div class="logo">🌤️ Trời Ơi</div>
     <div class="tag">Bầu trời biết nói — đang tải thời tiết…</div>
-    <div class="spin"></div>
   </div>
   <script>
     // Gỡ splash ngay khi Flutter vẽ khung hình đầu tiên.
